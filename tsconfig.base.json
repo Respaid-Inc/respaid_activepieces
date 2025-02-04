@@ -239,6 +239,9 @@
       "@activepieces/piece-gelato": [
         "packages/pieces/community/gelato/src/index.ts"
       ],
+      "@activepieces/piece-gelato28": [
+        "packages/pieces/community/gelato28/src/index.ts"
+      ],
       "@activepieces/piece-generatebanners": [
         "packages/pieces/community/generatebanners/src/index.ts"
       ],
@@ -518,6 +521,9 @@
       ],
       "@activepieces/piece-resend": [
         "packages/pieces/community/resend/src/index.ts"
+      ],
+      "@activepieces/piece-respaid-test": [
+        "packages/pieces/community/respaid-test/src/index.ts"
       ],
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
