@@ -28,6 +28,7 @@ import { findUserByHandleAction } from './lib/actions/find-user-by-handle';
 import { setUserStatusAction } from './lib/actions/set-user-status';
 import { newMention } from './lib/triggers/new-mention';
 import { markdownToSlackFormat } from './lib/actions/markdown-to-slack-format';
+import { transcribeAudioAction } from './lib/actions/transcribe-audio';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -120,6 +121,7 @@ export const slack = createPiece({
     getChannelHistory,
     setUserStatusAction,
     markdownToSlackFormat,
+    transcribeAudioAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://slack.com/api';
