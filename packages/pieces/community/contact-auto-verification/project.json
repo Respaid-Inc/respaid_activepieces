@@ -1,0 +1,26 @@
+{
+  "name": "pieces-contact-auto-verification",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/contact-auto-verification/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/contact-auto-verification",
+        "tsConfig": "packages/pieces/community/contact-auto-verification/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/contact-auto-verification/package.json",
+        "main": "packages/pieces/community/contact-auto-verification/src/index.ts",
+        "assets": ["packages/pieces/community/contact-auto-verification/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "tags": []
+}

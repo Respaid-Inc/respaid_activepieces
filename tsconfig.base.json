@@ -145,6 +145,9 @@
       "@activepieces/piece-connections": [
         "packages/pieces/community/connections/src/index.ts"
       ],
+      "@activepieces/piece-contact-auto-verification": [
+        "packages/pieces/community/contact-auto-verification/src/index.ts"
+      ],
       "@activepieces/piece-constant-contact": [
         "packages/pieces/community/constant-contact/src/index.ts"
       ],
