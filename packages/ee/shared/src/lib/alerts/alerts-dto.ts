@@ -3,6 +3,7 @@ import { ApId, BaseModelSchema } from "@activepieces/shared";
 
 export enum AlertChannel {
     EMAIL = 'EMAIL',
+    SLACK = 'SLACK',
 }
 
 export const Alert = Type.Object({

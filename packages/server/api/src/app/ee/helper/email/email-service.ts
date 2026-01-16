@@ -10,6 +10,8 @@ import { domainHelper } from '../../custom-domains/domain-helper'
 import { issuesService } from '../../issues/issues-service'
 import { projectRoleService } from '../../project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
+import { slackNotificationSender, buildIssueCreatedSlackMessage, buildIssuesReminderSlackMessage, buildTriggerFailureSlackMessage } from '../notifications/slack-notification-sender'
+import { defaultTheme } from '../../../flags/theme'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
@@ -67,7 +69,12 @@ export const emailService = (log: FastifyBaseLogger) => ({
         // TODO remove the hardcoded limit
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        
+        const slackWebhooks = alerts.data.filter((alert) => alert.channel === AlertChannel.SLACK).map((alert) => alert.receiver)
+
+        const platform = await platformService.getOne(platformId)
+        const platformName = platform?.name ?? defaultTheme.websiteName
+
+        // Send email notifications
         await emailSender(log).send({
             emails,
             platformId,
@@ -81,6 +88,21 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 },
             },
         })
+
+        // Send Slack notifications
+        const slackMessage = buildIssueCreatedSlackMessage({
+            flowName,
+            issueOrRunsPath,
+            isIssue,
+            createdAt,
+            platformName,
+        })
+        await Promise.all(slackWebhooks.map(async (webhookUrl) => {
+            await slackNotificationSender(log).send({
+                webhookUrl,
+                message: slackMessage,
+            })
+        }))
     },
     async sendQuotaAlert({ projectId, resetDate, templateName }: SendQuotaAlertArgs): Promise<void> {
         if (EDITION_IS_NOT_CLOUD) {
@@ -171,18 +193,23 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         const alerts = await alertsService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        
+        const slackWebhooks = alerts.data.filter((alert) => alert.channel === AlertChannel.SLACK).map((alert) => alert.receiver)
+
         const issuesUrl = await domainHelper.getPublicUrl({
             platformId: job.platformId,
             path: 'runs?limit=10#Issues',
         })
 
-        const issuesWithFormattedDate = issues.data.map((issue) => ({ 
-            ...issue, 
+        const issuesWithFormattedDate = issues.data.map((issue) => ({
+            ...issue,
             created: dayjs(issue.created).format('MMM D, h:mm a'),
-            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'), 
+            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'),
         }))
 
+        const platform = await platformService.getOne(job.platformId)
+        const platformName = platform?.name ?? defaultTheme.websiteName
+
+        // Send email notifications
         await emailSender(log).send({
             emails,
             platformId: job.platformId,
@@ -196,13 +223,33 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 },
             },
         })
+
+        // Send Slack notifications
+        const slackMessage = buildIssuesReminderSlackMessage({
+            issuesUrl,
+            issuesCount: issues.data.length,
+            projectName: job.projectName,
+            platformName,
+            issues: issuesWithFormattedDate,
+        })
+        await Promise.all(slackWebhooks.map(async (webhookUrl) => {
+            await slackNotificationSender(log).send({
+                webhookUrl,
+                message: slackMessage,
+            })
+        }))
     },
 
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
-        const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
+        const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const slackWebhooks = alerts.data.filter((alert) => alert.channel === AlertChannel.SLACK).map((alert) => alert.receiver)
         const project = await projectService.getOneOrThrow(projectId)
-        
+
+        const platform = await platformService.getOne(project.platformId)
+        const platformName = platform?.name ?? defaultTheme.websiteName
+
+        // Send email notifications
         await emailSender(log).send({
             emails,
             platformId: project.platformId,
@@ -214,6 +261,19 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 },
             },
         })
+
+        // Send Slack notifications
+        const slackMessage = buildTriggerFailureSlackMessage({
+            flowName,
+            projectName: project.displayName,
+            platformName,
+        })
+        await Promise.all(slackWebhooks.map(async (webhookUrl) => {
+            await slackNotificationSender(log).send({
+                webhookUrl,
+                message: slackMessage,
+            })
+        }))
     },
 
 })
